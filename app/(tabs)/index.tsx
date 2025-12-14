@@ -1,98 +1,64 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import * as Location from 'expo-location'; // GPS Tool
+import * as SMS from 'expo-sms'; // SMS Tool
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [status, setStatus] = useState('SAFE');
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const handlePress = async () => {
+    // 1. Vibrate immediately
+    Vibration.vibrate();
+    setStatus('LOCATING...');
+
+    // 2. Ask for Permission to use GPS
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+       Alert.alert("Permission denied", "We need location access to save you!");
+       setStatus('SAFE');
+       return;
+    }
+
+    // 3. Get the actual Location
+    let location = await Location.getCurrentPositionAsync({});
+    const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude}`;
+
+    setStatus('SENDING HELP...');
+
+    // 4. Open the SMS App with the message pre-filled
+    const isAvailable = await SMS.isAvailableAsync();
+    if (isAvailable) {
+      await SMS.sendSMSAsync(
+        ['100'], // We will add real contacts here later
+        `SOS! I am in danger. Track me here: ${mapLink}`
+      );
+      setStatus('SOS SENT!');
+    } else {
+      Alert.alert("Error", "SMS is not available on this device");
+      setStatus('FAILED');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>FEARLESS AND FREE</Text>
+      
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.sosButton} onPress={handlePress}>
+          <Text style={styles.buttonText}>SOS</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.status}>STATUS: {status}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  container: { flex: 1, backgroundColor: '#1c1c1e', alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 28, color: '#fff', fontWeight: 'bold', marginBottom: 50 },
+  buttonContainer: { elevation: 10, shadowColor: '#ff0000', shadowOpacity: 0.5, shadowRadius: 20 },
+  sosButton: { width: 220, height: 220, borderRadius: 110, backgroundColor: '#ff0000', alignItems: 'center', justifyContent: 'center', borderWidth: 5, borderColor: '#ff6666' },
+  buttonText: { color: '#fff', fontSize: 40, fontWeight: '900' },
+  status: { marginTop: 40, color: '#00ff00', fontSize: 18, fontWeight: 'bold' }
 });
