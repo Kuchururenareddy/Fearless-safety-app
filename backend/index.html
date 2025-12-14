@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>👮 POLICE CONTROL ROOM</title>
+    <style>
+        body { background-color: #111; color: white; font-family: monospace; text-align: center; }
+        h1 { color: #ff3333; font-size: 40px; border-bottom: 2px solid #ff3333; padding-bottom: 20px; }
+        #alert-box { width: 80%; margin: auto; }
+        
+        /* Default Alert Card - PENDING */
+        .alert-card {
+            background-color: #222;
+            border: 1px solid #444;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 10px solid #ff3333;
+            text-align: left;
+            animation: flash 1s infinite alternate;
+        }
+
+        /* Day 3 New Style: RESOLVED Card */
+        .resolved-card {
+            border-left-color: #00ff00 !important; /* Green line */
+            animation: none !important; /* Stop the flashing */
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        /* Day 3 New Style: Resolve Button */
+        .resolve-btn {
+            background-color: #ff3333;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            float: right; 
+            margin-left: 10px;
+        }
+        .resolve-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .safe-message { color: #00ff00; font-size: 20px; margin-top: 50px; }
+
+        @keyframes flash { from { border-left-color: #ff0000; } to { border-left-color: #550000; } }
+    </style>
+</head>
+<body>
+
+    <h1>🚨 HYDERABAD POLICE DASHBOARD 🚨</h1>
+    <h3 id="status">System Status: SCANNING...</h3>
+
+    <div id="alert-box">
+    </div>
+
+    <script>
+        // --- CRITICAL: Use your actual server IP address here if 'localhost' fails! ---
+        // (You find the IP in your server console log, e.g., 192.168.1.50)
+        const BASE_URL = "http://192.168.31.31:3000"; 
+        const DASHBOARD_URL = `${BASE_URL}/dashboard-data`;
+        const RESOLVE_URL = `${BASE_URL}/resolve`;
+
+        // Function to send the resolve signal back to the server
+        async function resolveAlert(alertId) {
+            
+            try {
+                const response = await fetch(RESOLVE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // Ensure the ID is correctly formatted for the server
+                    body: JSON.stringify({ id: alertId.toString() }) 
+                });
+
+                if (response.ok) {
+                    console.log(`Alert ${alertId} sent resolve request successfully. Fetching updates...`);
+                    // Force the dashboard to update immediately
+                    fetchAlerts(); 
+                } else {
+                    console.error("Failed to resolve alert. Server status:", response.status);
+                }
+            } catch (error) {
+                console.error("Connection Error while resolving. Check BASE_URL and server status!:", error);
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const response = await fetch(DASHBOARD_URL);
+                const alerts = await response.json();
+                
+                const container = document.getElementById('alert-box');
+                const status = document.getElementById('status');
+                
+                container.innerHTML = "";
+
+                if (alerts.length === 0) {
+                    status.innerText = "System Status: ALL CLEAR ✅";
+                    status.style.color = "#00ff00";
+                    container.innerHTML = "<div class='safe-message'>No Active Emergencies</div>";
+                } else {
+                    status.innerText = "System Status: ⚠️ EMERGENCY DETECTED";
+                    status.style.color = "#ff0000";
+
+                    alerts.forEach(alert => {
+                        const card = document.createElement('div');
+                        
+                        // Set the class based on status 
+                        if (alert.status === "RESOLVED") {
+                            card.className = "alert-card resolved-card";
+                        } else {
+                            card.className = "alert-card";
+                        }
+                        
+                        card.innerHTML = `
+                            <h2>${alert.status === "RESOLVED" ? '✅ RESOLVED' : '🆘 HELP NEEDED'}</h2>
+                            <p><strong>📍 Location:</strong> ${alert.location}</p>
+                            <p><strong>⏰ Time:</strong> ${alert.time}</p>
+                            <p><strong>ID:</strong> ${alert.id}</p>
+                        `;
+
+                        // Only show the button if the alert is PENDING
+                        if (alert.status === "PENDING") {
+                            const btn = document.createElement('button');
+                            btn.className = 'resolve-btn';
+                            btn.innerText = 'RESOLVE INCIDENT';
+                            
+                            // Attach the click handler, passing the alert ID
+                            // We use an explicit function call in the HTML to ensure compatibility
+                            btn.setAttribute('onclick', `resolveAlert(${alert.id})`);
+                            
+                            card.appendChild(btn);
+                        }
+
+                        container.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                console.error("Connection Error (Server not running or wrong BASE_URL):", error);
+            }
+        }
+
+        // Check for new alerts every 2 seconds
+        setInterval(fetchAlerts, 2000);
+        fetchAlerts(); // Initial load
+    </script>
+</body>
+</html>
