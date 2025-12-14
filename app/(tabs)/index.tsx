@@ -1,13 +1,14 @@
-import * as Location from 'expo-location'; // GPS Tool
-import * as SMS from 'expo-sms'; // SMS Tool
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
+// These are the tools that talk to the phone hardware
+import * as Location from 'expo-location';
+import * as SMS from 'expo-sms';
 
 export default function HomeScreen() {
   const [status, setStatus] = useState('SAFE');
 
   const handlePress = async () => {
-    // 1. Vibrate immediately
+    // 1. Vibrate immediately so you know it worked
     Vibration.vibrate();
     setStatus('LOCATING...');
 
@@ -19,9 +20,10 @@ export default function HomeScreen() {
        return;
     }
 
-    // 3. Get the actual Location
+    // 3. Get the actual Location coordinates
     let location = await Location.getCurrentPositionAsync({});
-    const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude}`;
+    // Create a Google Maps link
+    const mapLink = `http://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}`;
 
     setStatus('SENDING HELP...');
 
@@ -29,7 +31,7 @@ export default function HomeScreen() {
     const isAvailable = await SMS.isAvailableAsync();
     if (isAvailable) {
       await SMS.sendSMSAsync(
-        ['100'], // We will add real contacts here later
+        ['100'], // We will add real contacts from your "Guardians" list later
         `SOS! I am in danger. Track me here: ${mapLink}`
       );
       setStatus('SOS SENT!');
