@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>👮 POLICE CONTROL ROOM</title>
+    <style>
+        body { background-color: #111; color: white; font-family: monospace; text-align: center; }
+        h1 { color: #ff3333; font-size: 40px; border-bottom: 2px solid #ff3333; padding-bottom: 20px; }
+        #alert-box { width: 80%; margin: auto; }
+        
+        .alert-card {
+            background-color: #222;
+            border: 1px solid #444;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 10px solid #ff3333;
+            text-align: left;
+            animation: flash 1s infinite alternate;
+        }
+
+        .safe-message { color: #00ff00; font-size: 20px; margin-top: 50px; }
+
+        @keyframes flash { from { border-left-color: #ff0000; } to { border-left-color: #550000; } }
+    </style>
+</head>
+<body>
+
+    <h1>🚨 HYDERABAD POLICE DASHBOARD 🚨</h1>
+    <h3 id="status">System Status: SCANNING...</h3>
+
+    <div id="alert-box">
+        </div>
+
+    <script>
+        // CHANGE THIS IP TO YOUR OWN COMPUTER IP (From the terminal)
+        const SERVER_URL = "http://localhost:3000/dashboard-data";
+
+        async function fetchAlerts() {
+            try {
+                const response = await fetch(SERVER_URL);
+                const alerts = await response.json();
+                
+                const container = document.getElementById('alert-box');
+                const status = document.getElementById('status');
+                
+                // Clear the box and rebuild it
+                container.innerHTML = "";
+
+                if (alerts.length === 0) {
+                    status.innerText = "System Status: ALL CLEAR ✅";
+                    status.style.color = "#00ff00";
+                    container.innerHTML = "<div class='safe-message'>No Active Emergencies</div>";
+                } else {
+                    status.innerText = "System Status: ⚠️ EMERGENCY DETECTED";
+                    status.style.color = "#ff0000";
+
+                    alerts.forEach(alert => {
+                        const card = document.createElement('div');
+                        card.className = "alert-card";
+                        card.innerHTML = `
+                            <h2>🆘 HELP NEEDED</h2>
+                            <p><strong>📍 Location:</strong> ${alert.location}</p>
+                            <p><strong>⏰ Time:</strong> ${alert.time}</p>
+                            <p><strong>ID:</strong> ${alert.id}</p>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                console.error("Connection Error:", error);
+            }
+        }
+
+        // Check for new alerts every 2 seconds
+        setInterval(fetchAlerts, 2000);
+        fetchAlerts();
+    </script>
+
+</body>
+</html>
