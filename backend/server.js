@@ -9,7 +9,6 @@ app.use(cors());
 app.use(express.json());
 
 // --- DATABASE (Temporary Memory) ---
-// This list will hold all the alerts while the server is running
 let policeAlerts = [];
 
 // --- ROUTE 1: RECEIVE SOS (From Mobile App) ---
@@ -24,7 +23,6 @@ app.post('/sos', (req, res) => {
         status: "PENDING"
     };
 
-    // Save it to our list
     policeAlerts.unshift(newAlert); // Add to the top of the list
 
     console.log("🚨 NEW ALERT SAVED:", newAlert);
@@ -32,9 +30,26 @@ app.post('/sos', (req, res) => {
 });
 
 // --- ROUTE 2: SHOW DASHBOARD (From Web Browser) ---
-// The Police Computer will ask this route: "Any new crimes?"
 app.get('/dashboard-data', (req, res) => {
     res.json(policeAlerts);
+});
+
+// --- ROUTE 3: RESOLVE INCIDENT (From Dashboard) ---
+app.post('/resolve', (req, res) => {
+    const { id } = req.body;
+
+    // Find the alert by its ID (using toString() ensures safe comparison)
+    const alertIndex = policeAlerts.findIndex(alert => alert.id.toString() === id.toString());
+
+    if (alertIndex !== -1) {
+        // Update the status
+        policeAlerts[alertIndex].status = "RESOLVED";
+        console.log(`✅ Alert ${id} RESOLVED.`);
+        res.json({ success: true, message: `Alert ${id} resolved.` });
+    } else {
+        console.log(`❌ Alert ${id} not found.`);
+        res.status(404).json({ success: false, message: "Alert not found" });
+    }
 });
 
 // Start Server
