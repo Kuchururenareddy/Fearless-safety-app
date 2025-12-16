@@ -1,5 +1,4 @@
 import { Link } from 'expo-router';
-<<<<<<< Updated upstream
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function TeamHub() {
@@ -39,28 +38,10 @@ export default function TeamHub() {
       </View>
 
     </ScrollView>
-=======
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>SAFE & FREE</Text>
-      <Text style={styles.subtitle}>Member 1's Design Goes Here</Text>
-      
-      {/* This button takes you to your Sensor Test Page */}
-      <Link href="/sensor-debug" asChild>
-        <TouchableOpacity style={styles.debugBtn}>
-          <Text style={styles.btnText}>🔧 GO TO SENSOR DEBUG</Text>
-        </TouchableOpacity>
-      </Link>
-    </View>
->>>>>>> Stashed changes
   );
 }
 
 const styles = StyleSheet.create({
-<<<<<<< Updated upstream
   container: { flexGrow: 1, backgroundColor: '#111', padding: 20, alignItems: 'center' },
   header: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 30, marginTop: 40 },
   card: { width: '100%', backgroundColor: '#222', borderRadius: 10, padding: 20, marginBottom: 20 },
@@ -70,11 +51,4 @@ const styles = StyleSheet.create({
   btnActive: { backgroundColor: '#00cc00', padding: 15, borderRadius: 8, alignItems: 'center' },
   btnDisabled: { backgroundColor: '#444', padding: 15, borderRadius: 8, alignItems: 'center' },
   btnText: { color: '#000', fontWeight: 'bold' }
-=======
-  container: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
-  title: { color: 'white', fontSize: 30, fontWeight: 'bold' },
-  subtitle: { color: '#888', marginBottom: 50 },
-  debugBtn: { backgroundColor: '#333', padding: 15, borderRadius: 10, marginTop: 20 },
-  btnText: { color: '#00ff00', fontWeight: 'bold' }
->>>>>>> Stashed changes
 });
