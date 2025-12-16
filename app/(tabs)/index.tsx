@@ -1,102 +1,54 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Memory Tool
-import * as Location from 'expo-location';
-import { Accelerometer } from 'expo-sensors'; // Shake Tool
-import * as SMS from 'expo-sms';
-import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
+import { Link } from 'expo-router';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function HomeScreen() {
-  const [status, setStatus] = useState('SAFE');
-  
-  // 1. Shake Detection Logic
-  useEffect(() => {
-    Accelerometer.setUpdateInterval(100);
-    const subscription = Accelerometer.addListener(data => {
-      const totalForce = Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z);
-      if (totalForce > 2.5) { // If shaken hard (Threshold 2.5G)
-        handlePress(); // Trigger SOS automatically!
-      }
-    });
-    return () => subscription.remove();
-  }, []);
-
-  const handlePress = async () => {
-    Vibration.vibrate(1000); // Long vibration
-    setStatus('LOCATING...');
-
-    // 2. Get Location
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-       Alert.alert("Permission denied");
-       return;
-    }
-    let location = await Location.getCurrentPositionAsync({});
-    const mapLink = `http://googleusercontent.com/maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}`;
-
-    // 3. Get Saved Contacts to SMS
-    const storedContacts = await AsyncStorage.getItem('emergency_contacts');
-    const contacts = storedContacts ? JSON.parse(storedContacts) : [];
-    const phoneNumbers = contacts.map(c => c.phone); // Get just the numbers
-
-    if (phoneNumbers.length === 0) {
-      Alert.alert("No Contacts!", "Go to the 'Guardians' tab to add numbers.");
-      setStatus('SAFE');
-      return; 
-    }
-
-    setStatus('SENDING HELP...');
-
-    // 4. Send to Server (Member 3's Backend)
-    // IMPORTANT: You must change 'YOUR_LAPTOP_IP' to your actual IP (e.g., 192.168.1.5)
-    try {
-        await fetch('http://192.168.1.5:3000/api/sos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                location: mapLink,
-                contacts: phoneNumbers
-            })
-        });
-        console.log("Sent to Server");
-    } catch (e) {
-        console.log("Server offline (Offline Mode Active)");
-    }
-
-    // 5. Send SMS
-    const isAvailable = await SMS.isAvailableAsync();
-    if (isAvailable) {
-      await SMS.sendSMSAsync(
-        phoneNumbers, 
-        `SOS! I need help. Location: ${mapLink}`
-      );
-      setStatus('SOS SENT!');
-    }
-  };
-
+export default function TeamHub() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>FEARLESS AND FREE</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.header}>🚀 TEAM STATUS HUB</Text>
       
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.sosButton} onPress={handlePress}>
-          <Text style={styles.buttonText}>SOS</Text>
+      {/* SECTION 1: MEMBER 1 (The Designer) */}
+      <View style={styles.card}>
+        <Text style={styles.role}>MEMBER 1: DESIGN</Text>
+        <Text style={styles.status}>Status: In Progress</Text>
+        {/* Link this to Member 1's login page if it exists, or just keep it as a placeholder */}
+        <TouchableOpacity style={styles.btnDisabled}>
+          <Text style={styles.btnText}>👤 Go to Profile / Login (Coming Soon)</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={[styles.status, { color: status === 'SAFE' ? '#00ff00' : '#ff0000' }]}>
-        STATUS: {status}
-      </Text>
-      <Text style={styles.hint}>Shake phone to trigger SOS</Text>
-    </View>
+      {/* SECTION 2: MEMBER 2 (The Engineer - YOU) */}
+      <View style={styles.card}>
+        <Text style={styles.role}>MEMBER 2: SENSORS</Text>
+        <Text style={styles.status}>Status: ✅ READY</Text>
+        <Link href="/sensor-debug" asChild>
+          <TouchableOpacity style={styles.btnActive}>
+            <Text style={styles.btnText}>📡 Test Sensors (Shake/GPS)</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+
+      {/* SECTION 3: MEMBER 3 (Connectivity) */}
+      <View style={styles.card}>
+        <Text style={styles.role}>MEMBER 3: POLICE SERVER</Text>
+        <Text style={styles.status}>Status: Check Laptop Terminal</Text>
+        <Text style={styles.info}>
+          Server must be running on laptop. 
+          Current IP needed in ApiService.js.
+        </Text>
+      </View>
+
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1c1c1e', alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 28, color: '#fff', fontWeight: 'bold', marginBottom: 50 },
-  buttonContainer: { elevation: 10, shadowColor: '#ff0000', shadowOpacity: 0.5, shadowRadius: 20 },
-  sosButton: { width: 220, height: 220, borderRadius: 110, backgroundColor: '#ff0000', alignItems: 'center', justifyContent: 'center', borderWidth: 5, borderColor: '#ff6666' },
-  buttonText: { color: '#fff', fontSize: 40, fontWeight: '900' },
-  status: { marginTop: 40, fontSize: 18, fontWeight: 'bold' },
-  hint: { color: '#666', marginTop: 10 }
+  container: { flexGrow: 1, backgroundColor: '#111', padding: 20, alignItems: 'center' },
+  header: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 30, marginTop: 40 },
+  card: { width: '100%', backgroundColor: '#222', borderRadius: 10, padding: 20, marginBottom: 20 },
+  role: { color: '#aaa', fontSize: 14, fontWeight: 'bold', marginBottom: 5 },
+  status: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
+  info: { color: '#666', fontSize: 12, fontStyle: 'italic' },
+  btnActive: { backgroundColor: '#00cc00', padding: 15, borderRadius: 8, alignItems: 'center' },
+  btnDisabled: { backgroundColor: '#444', padding: 15, borderRadius: 8, alignItems: 'center' },
+  btnText: { color: '#000', fontWeight: 'bold' }
 });
