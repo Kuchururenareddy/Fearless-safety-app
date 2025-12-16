@@ -1,35 +1,48 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Tabs } from 'expo-router';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+function TabBarIcon(props: {
+  name: React.ComponentProps<typeof FontAwesome>['name'];
+  color: string;
+}) {
+  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
+}
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#FF3B30', // Red for Emergency
+        tabBarStyle: { backgroundColor: '#111', borderTopColor: '#333' },
         headerShown: false,
-        tabBarButton: HapticTab,
       }}>
+      
+      {/* 1. HOME SCREEN (Visible) */}
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
         }}
       />
+
+      {/* 2. CONTACTS SCREEN (Visible if you have it) */}
       <Tabs.Screen
-        name="explore"
+        name="two"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Guardians',
+          tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
         }}
       />
+
+      {/* 3. HIDDEN TABS (Developer Tools - Users won't see these) */}
+      <Tabs.Screen name="sensor-debug" options={{ href: null }} />
+      <Tabs.Screen name="test_sensors" options={{ href: null }} />
+      <Tabs.Screen name="spy-cam" options={{ href: null }} />
+      <Tabs.Screen name="fake-call" options={{ href: null }} />
+      <Tabs.Screen name="modal" options={{ href: null }} />
+
     </Tabs>
   );
 }
